@@ -74,7 +74,8 @@ enum {
 };
 
 #ifdef WITH_STARTUPLOG
-#define StartupLog(a) wxMessageBox(a, "Aegisub startup log")
+// #define StartupLog(a) wxMessageBox(a, "Aegisub startup log")
+#define StartupLog(a) std::cout << "Aegisub startup log - frame_main - : " << a << std::endl;
 #else
 #define StartupLog(a) LOG_I("frame_main/init") << a
 #endif
@@ -93,11 +94,15 @@ public:
 	}
 };
 
-FrameMain::FrameMain()
+FrameMain::FrameMain( bool isCli = false)
 : wxFrame(nullptr, -1, "", wxDefaultPosition, wxSize(920,700), wxDEFAULT_FRAME_STYLE | wxCLIP_CHILDREN)
 , context(agi::make_unique<agi::Context>())
 {
 	StartupLog("Entering FrameMain constructor");
+  if (isCli){
+	  StartupLog("Cli mode is activated ! No gui available in this moment ... ");
+    return ;
+  }
 
 #ifdef __WXGTK__
 	// XXX HACK XXX

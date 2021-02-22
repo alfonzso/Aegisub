@@ -90,3 +90,7 @@ vendor/luajit/src/luajit
 
 .nuget
 .vs
+
+# alfonzso ignore list
+build-dir
+build_args

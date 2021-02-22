@@ -30,6 +30,7 @@
 #include <wx/app.h>
 
 #include "aegisublocale.h"
+#include "cli/aegi-opts.h"
 
 #ifndef wxUSE_EXCEPTIONS
 #error wxWidgets is compiled without exceptions support. Aegisub requires exceptions support in wxWidgets to run safely.
@@ -55,12 +56,19 @@ class AegisubApp : public wxApp {
 
 	void UnhandledException(bool);
 
+  void ConvertSubtitles();
+
 	void OpenFiles(wxArrayStringsAdapter filenames);
+  // void OpenSubFiles(wxArrayStringsAdapter filenames);
+  // void OpenSubFilesvoid(std::vector<agi::fs::path> files);
+  void OpenSubFiles(std::string file);
 
 	std::vector<FrameMain *> frames;
 public:
 	AegisubApp();
 	AegisubLocale locale;
+
+  AegisubOpts oAegisubOpts;
 
 	agi::Context& NewProjectContext();
 	void CloseAll();

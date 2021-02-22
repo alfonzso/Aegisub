@@ -29,8 +29,8 @@
 //
 // Aegisub Project http://www.aegisub.org/
 
-#include "command.h"
 
+#include "command.h"
 #include "../ass_dialogue.h"
 #include "../ass_file.h"
 #include "../compat.h"
@@ -56,6 +56,9 @@
 #include <boost/range/algorithm/copy.hpp>
 #include <wx/msgdlg.h>
 #include <wx/choicdlg.h>
+
+// #include "subtitle.h"
+
 
 namespace {
 	using cmd::Command;
@@ -341,6 +344,26 @@ struct subtitle_properties final : public Command {
 		ShowPropertiesDialog(c);
 	}
 };
+
+void main_save_subtitles(agi::Context *c, agi::fs::path filename) {
+	if (filename.empty()) {
+		c->videoController->Stop();
+		filename = SaveFileSelector(_("Save subtitles file"), "Path/Last/Subtitles",
+			c->subsController->Filename().stem().string() + ".ass", "ass",
+			"Advanced Substation Alpha (*.ass)|*.ass", c->parent);
+		if (filename.empty()) return;
+	}
+
+	try {
+		c->subsController->Save(filename);
+	}
+	catch (const agi::Exception& err) {
+		wxMessageBox(to_wx(err.GetMessage()), "Error", wxOK | wxICON_ERROR | wxCENTER, c->parent);
+	}
+	catch (...) {
+		wxMessageBox("Unknown error", "Error", wxOK | wxICON_ERROR | wxCENTER, c->parent);
+	}
+}
 
 static void save_subtitles(agi::Context *c, agi::fs::path filename) {
 	if (filename.empty()) {

@@ -78,7 +78,7 @@ class FrameMain : public wxFrame {
 	wxSizer *ToolsSizer; ///< Arranges audio and editing areas top to bottom
 
 public:
-	FrameMain();
+	FrameMain( bool isCli );
 	~FrameMain();
 
 	/// Set the status bar text

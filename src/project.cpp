@@ -48,6 +48,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <wx/msgdlg.h>
+#include <iostream>
 
 Project::Project(agi::Context *c) : context(c) {
 	OPT_SUB("Audio/Cache/Type", &Project::ReloadAudio, this);
@@ -145,15 +146,17 @@ bool Project::DoLoadSubtitles(agi::fs::path const& path, std::string encoding, P
 		return false;
 	}
 
-	Selection sel;
-	AssDialogue *active_line = nullptr;
-	if (!context->ass->Events.empty()) {
-		int row = mid<int>(0, properties.active_row, context->ass->Events.size() - 1);
-		active_line = &*std::next(context->ass->Events.begin(), row);
-		sel.insert(active_line);
-	}
-	context->selectionController->SetSelectionAndActive(std::move(sel), active_line);
-	context->subsGrid->ScrollTo(properties.scroll_position);
+  if ( !context->IsCliEnabled ){
+    Selection sel;
+    AssDialogue *active_line = nullptr;
+    if (!context->ass->Events.empty()) {
+      int row = mid<int>(0, properties.active_row, context->ass->Events.size() - 1);
+      active_line = &*std::next(context->ass->Events.begin(), row);
+      sel.insert(active_line);
+    }
+    context->selectionController->SetSelectionAndActive(std::move(sel), active_line);
+    context->subsGrid->ScrollTo(properties.scroll_position);
+  }
 
 	return true;
 }
@@ -536,4 +539,51 @@ void Project::LoadList(std::vector<agi::fs::path> const& files) {
 
 	if (!subs.empty())
 		LoadUnloadFiles(properties);
+}
+
+void Project::LoadSubListOnly(std::vector<agi::fs::path> const& files) {
+	// Keep these lists sorted
+
+	// Subtitle formats
+	const char *subsList[] = {
+		".ass",
+		".srt",
+		".ssa",
+		".sub",
+		".ttxt"
+	};
+
+	auto search = [](const char **begin, const char **end, std::string const& str) {
+		return std::binary_search(begin, end, str.c_str(), [](const char *a, const char *b) {
+			return strcmp(a, b) < 0;
+		});
+	};
+
+	agi::fs::path audio, video, subs, timecodes, keyframes;
+	for (auto file : files) {
+		if (file.is_relative()) file = absolute(file);
+		if (!agi::fs::FileExists(file)) continue;
+
+		auto ext = file.extension().string();
+		boost::to_lower(ext);
+
+		// Could be subtitles, keyframes or timecodes, so try loading as each
+		if (ext == ".txt" || ext == ".log") {
+
+			if (subs.empty() && ext != ".log")
+				subs = file;
+			continue;
+		}
+
+    std::cout << "openfile loop: " << file << std::endl;
+		if (subs.empty() && search(std::begin(subsList), std::end(subsList), ext))
+			subs = file;
+	}
+  std::cout << "openfile"  << std::endl;
+
+	ProjectProperties properties;
+	if (!subs.empty()) {
+		if (!DoLoadSubtitles(subs, "", properties))
+			subs.clear();
+	}
 }

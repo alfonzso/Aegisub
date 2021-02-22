@@ -1,0 +1,45 @@
+FROM ubuntu:20.04
+
+RUN apt-get update && \
+  DEBIAN_FRONTEND="noninteractive" apt-get install -y software-properties-common
+
+RUN apt-get update && \
+  DEBIAN_FRONTEND="noninteractive" apt-get install -y wget curl vim
+
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test
+RUN wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key add -
+RUN wget -qO - https://repos.codelite.org/CodeLite.asc | apt-key add -
+RUN add-apt-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+RUN apt-add-repository 'deb https://repos.codelite.org/wx3.1.4/ubuntu/ focal universe'
+
+RUN apt-get update
+
+# apt-get install -y gettext
+RUN   DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+  libasound2-dev  \
+  libfftw3-dev  \
+  libhunspell-dev  \
+  libfribidi-dev  \
+  libass-dev  \
+  libicu-dev  \
+  luarocks  \
+  cmake  \
+  build-essential  \
+  libboost-all-dev  \
+  libffms2-dev  \
+  libfontconfig1-dev  \
+  libopenal-dev  \
+  libuchardet-dev  \
+  libwxgtk3.0-gtk3-dev \
+  portaudio19-dev  \
+  libpulse-dev  \
+  autopoint  \
+  libgtest-dev  \
+  gcc-10  \
+  g++-10  \
+  python3-pip  \
+  python3-setuptools
+
+RUN   DEBIAN_FRONTEND="noninteractive" apt-get install -y gettext git
+
+# libwxgtk3.0-dev

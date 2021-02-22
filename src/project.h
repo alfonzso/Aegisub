@@ -94,6 +94,7 @@ public:
 	std::vector<int> const& Keyframes() const { return keyframes; }
 
 	void LoadList(std::vector<agi::fs::path> const& files);
+  void LoadSubListOnly(std::vector<agi::fs::path> const& files);
 
 	DEFINE_SIGNAL_ADDERS(AnnounceAudioProviderModified, AddAudioProviderListener)
 	DEFINE_SIGNAL_ADDERS(AnnounceVideoProviderModified, AddVideoProviderListener)

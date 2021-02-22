@@ -66,6 +66,9 @@ struct Context {
 	FrameMain *frame = nullptr;
 	VideoDisplay *videoDisplay = nullptr;
 
+  // tst cli
+  bool IsCliEnabled = false;
+
 	Context();
 	~Context();
 };

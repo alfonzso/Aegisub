@@ -32,6 +32,9 @@
 #include <libaegisub/make_unique.h>
 #include <libaegisub/path.h>
 
+#include <iostream>
+
+
 namespace agi {
 Context::Context()
 : ass(make_unique<AssFile>())
@@ -48,6 +51,9 @@ Context::Context()
 , dialog(make_unique<DialogManager>())
 {
 	subsController->SetSelectionController(selectionController.get());
+  std::cout  << "rererer" << std::endl;
+  std::cout  << IsCliEnabled << std::endl;
+  std::cout  << "rerererer" << std::endl;
 }
 
 Context::~Context() = default;

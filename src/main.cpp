@@ -73,6 +73,11 @@
 #include <wx/stackwalk.h>
 #include <wx/utils.h>
 
+#include <iostream>
+#include "video_controller.h"
+
+void main_save_subtitles(agi::Context *c, agi::fs::path filename) ;
+
 namespace config {
 	agi::Options *opt = nullptr;
 	agi::MRUManager *mru = nullptr;
@@ -82,12 +87,14 @@ namespace config {
 
 wxIMPLEMENT_APP(AegisubApp);
 
+
 static const char *LastStartupState = nullptr;
 
 #ifdef WITH_STARTUPLOG
-#define StartupLog(a) wxMessageBox(wxT(a), wxT("Aegisub startup log"))
+// #define StartupLog(a) wxMessageBox(wxT(a), wxT("Aegisub startup log"))
+#define StartupLog(a) std::cout << "Aegisub startup log - main - : " << a << std::endl;
 #else
-#define StartupLog(a) LastStartupState = a
+#define StartupLog(a) LastStartupState = a ♥
 #endif
 
 void AegisubApp::OnAssertFailure(const wxChar *file, int line, const wxChar *func, const wxChar *cond, const wxChar *msg) {
@@ -116,6 +123,10 @@ bool AegisubApp::OnInit() {
 #else
 	SetAppName("aegisub");
 #endif
+
+  // Init commandline tools
+  // init_cli(argc, argv);
+  oAegisubOpts.init_cli(argc, argv);
 
 	// The logger isn't created on demand on background threads, so force it to
 	// be created now
@@ -321,9 +332,9 @@ bool AegisubApp::OnInit() {
 
 		// Get parameter subs
 		StartupLog("Parse command line");
-		auto const& args = argv.GetArguments();
-		if (args.size() > 1)
-			OpenFiles(wxArrayStringsAdapter(args.size() - 1, &args[1]));
+
+    if (oAegisubOpts.isCliEnabled())
+      ConvertSubtitles();
 	}
 	catch (agi::Exception const& e) {
 		wxMessageBox(to_wx(e.GetMessage()), "Fatal error while initializing");
@@ -345,6 +356,17 @@ bool AegisubApp::OnInit() {
 
 	StartupLog("Initialization complete");
 	return true;
+}
+
+
+void AegisubApp::ConvertSubtitles(){
+    auto const& args = argv.GetArguments();
+    std::cout <<  args[1] << std::endl;
+    agi::Context *ccc = frames[0]->context.get();
+    // OpenSubFiles(wxArrayStringsAdapter(args.size() - 1, &args[1]));
+    // agi::fs::path
+    OpenSubFiles(oAegisubOpts.getIn());
+    main_save_subtitles(ccc,  oAegisubOpts.getOut() );
 }
 
 int AegisubApp::OnExit() {
@@ -374,7 +396,8 @@ int AegisubApp::OnExit() {
 }
 
 agi::Context& AegisubApp::NewProjectContext() {
-	auto frame = new FrameMain;
+	auto frame = new FrameMain(oAegisubOpts.isCliEnabled());
+  frame->context->IsCliEnabled = oAegisubOpts.isCliEnabled() ;
 	frame->Bind(wxEVT_DESTROY, [=](wxWindowDestroyEvent& evt) {
 		if (evt.GetWindow() != frame) {
 			evt.Skip();
@@ -462,7 +485,11 @@ int AegisubApp::OnRun() {
 	std::string error;
 
 	try {
-		return MainLoop();
+    if (oAegisubOpts.isCliEnabled()){
+      return 0;
+    }else{
+      return MainLoop();
+    }
 	}
 	catch (const std::exception &e) { error = std::string("std::exception: ") + e.what(); }
 	catch (const agi::Exception &e) { error = "agi::exception: " + e.GetMessage(); }
@@ -488,4 +515,32 @@ void AegisubApp::OpenFiles(wxArrayStringsAdapter filenames) {
 		files.push_back(from_wx(filenames[i]));
 	if (!files.empty())
 		frames[0]->context->project->LoadList(files);
+}
+
+void AegisubApp::OpenSubFiles(std::string file) {
+  std::cout << "in filename: " << file << std::endl;
+  std::vector<agi::fs::path> files;
+  files.push_back(file);
+  frames[0]->context->project->LoadSubListOnly(files);
+}
+
+void main_save_subtitles(agi::Context *c, agi::fs::path filename) {
+  std::cout << "out filename: " << filename<< std::endl;
+	if (filename.empty()) {
+		c->videoController->Stop();
+		filename = SaveFileSelector(_("Save subtitles file"), "Path/Last/Subtitles",
+			c->subsController->Filename().stem().string() + ".ass", "ass",
+			"Advanced Substation Alpha (*.ass)|*.ass", c->parent);
+		if (filename.empty()) return;
+	}
+
+	try {
+		c->subsController->Save(filename);
+	}
+	catch (const agi::Exception& err) {
+		wxMessageBox(to_wx(err.GetMessage()), "Error", wxOK | wxICON_ERROR | wxCENTER, c->parent);
+	}
+	catch (...) {
+		wxMessageBox("Unknown error", "Error", wxOK | wxICON_ERROR | wxCENTER, c->parent);
+	}
 }

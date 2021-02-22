@@ -286,7 +286,8 @@ add_subdirectory("vendor/csri")
 add_executable(Aegisub WIN32
     "${CMAKE_CURRENT_BINARY_DIR}/src/libresrc/bitmap.h"
     "${CMAKE_CURRENT_BINARY_DIR}/src/libresrc/default_config.h"
-    
+
+    src/cli/aegi-opts.cpp
     src/command/app.cpp
     src/command/audio.cpp
     src/command/automation.cpp
@@ -671,6 +672,9 @@ if(WITH_UCHARDET)
     target_include_directories(libaegisub PRIVATE ${uchardet_INCLUDE_DIRS})
     target_link_libraries(libaegisub PRIVATE ${uchardet_LIBRARIES})
 endif()
+
+find_package(cxxopts)
+# target_include_directories(cxxopts PRIVATE ${cxxopts_INCLUDE_DIR})
 
 option(WITH_UPDATE_CHECKER "Enable update checker")
 if(WITH_UPDATE_CHECKER)
