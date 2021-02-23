@@ -94,7 +94,7 @@ static const char *LastStartupState = nullptr;
 // #define StartupLog(a) wxMessageBox(wxT(a), wxT("Aegisub startup log"))
 #define StartupLog(a) std::cout << "Aegisub startup log - main - : " << a << std::endl;
 #else
-#define StartupLog(a) LastStartupState = a ♥
+#define StartupLog(a) LastStartupState = a
 #endif
 
 void AegisubApp::OnAssertFailure(const wxChar *file, int line, const wxChar *func, const wxChar *cond, const wxChar *msg) {

@@ -12,6 +12,41 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
+
+# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# the RPATH to be used when installing
+SET(CMAKE_INSTALL_RPATH "")
+
+# don't add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+
+
+## # set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+## # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+## # set(CMAKE_EXE_LINKER_FLAGS -static )
+## # set(wxWidgets_USE_LIBS ON)
+##
+## set(BUILD_SHARED_LIBS OFF)
+## set(BUILD_STATIC_LIBS ON)
+##
+## # set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+## # set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+##
+## message( ${CMAKE_FIND_LIBRARY_SUFFIXES} )
+## set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+## set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+
 add_executable(luajit-minilua vendor/luajit/src/host/minilua.c)
 if(NOT WIN32)
     target_link_libraries(luajit-minilua m)
@@ -507,6 +542,7 @@ find_package(ass REQUIRED)
 target_include_directories(Aegisub PRIVATE ${ass_INCLUDE_DIRS})
 target_link_libraries(Aegisub LINK_PRIVATE ${ass_LIBRARIES})
 
+# set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED container filesystem locale regex thread)
 target_link_libraries(libaegisub PRIVATE "Boost::locale" "Boost::regex" "Boost::thread")
 target_link_libraries(libaegisub PUBLIC "Boost::headers" "Boost::container" "Boost::filesystem")
@@ -736,7 +772,8 @@ configure_file("src/libresrc/manifest.respack" "${CMAKE_CURRENT_BINARY_DIR}/src/
 
 if(NOT WIN32)
     set(AEGISUB_COMMAND "aegisub" CACHE STRING "The executable name of Aegisub")
-    set_target_properties(Aegisub PROPERTIES OUTPUT_NAME "${AEGISUB_COMMAND}")
+    # set_target_properties(Aegisub PROPERTIES OUTPUT_NAME "${AEGISUB_COMMAND}" LINK_FLAGS "-Wl,-rpath,./lib")
+    set_target_properties(Aegisub PROPERTIES OUTPUT_NAME "${AEGISUB_COMMAND}" LINK_FLAGS "-Wl,-rpath -Wl,$ORIGIN/lib")
     configure_file("packages/desktop/aegisub.desktop.template.in" "aegisub.desktop" @ONLY)
     install(FILES "${CMAKE_BINARY_DIR}/aegisub.desktop" DESTINATION "share/applications")
     install(FILES "packages/desktop/16x16.png" DESTINATION "share/icons/hicolor/16x16/apps" RENAME aegisub.png)
@@ -753,6 +790,60 @@ set(WITH_TEST OFF CACHE BOOL "Enable unit tests")
 if(WITH_TEST)
     include("CMakeLists.test.txt")
 endif()
+
+## install (CODE "
+##     include(BundleUtilities)
+##     # fixup_bundle(\"${CMAKE_INSTALL_PREFIX}\" \"\" \"\")
+##     fixup_bundle(\"/root/aegi/build_dir/bin/aegisub\" \"\" \"/usr/lib/x86_64-linux-gnu/\")
+## " OPTIONAL)
+
+install(CODE [[
+    file(GET_RUNTIME_DEPENDENCIES
+        RESOLVED_DEPENDENCIES_VAR RES
+        UNRESOLVED_DEPENDENCIES_VAR UNRES
+        CONFLICTING_DEPENDENCIES_PREFIX CONFLICTING_DEPENDENCIES
+        EXECUTABLES $<TARGET_FILE:Aegisub>
+    )
+
+    message("\n\nFound dependencies :")
+    # foreach(DEP ${RES})
+    #     message("${DEP}")
+    # endforeach()
+    set (_resolvedFiles "")
+    foreach(DEP ${RES})
+      get_filename_component(_resolvedFile "${DEP}" REALPATH)
+      # list (APPEND _resolvedFiles "${_resolvedFile}")
+      # message("Real path: ${_resolvedFile} ")
+      file(INSTALL
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+        TYPE SHARED_LIBRARY
+        FILES "${DEP}"
+      )
+      file(INSTALL
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+        TYPE SHARED_LIBRARY
+        FILES "${_resolvedFile}"
+      )
+    endforeach()
+    ## message("\n\nNot found dependencies :")
+    ## foreach(DEP ${UNRES})
+    ##     message("${DEP}")
+    ## endforeach()
+]])
+
+## set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+## set(CPACK_GENERATOR "DEB")
+## set(CPACK_PACKAGE_VERSION_MAJOR "0")
+## set(CPACK_PACKAGE_VERSION_MINOR "2")
+## set(CPACK_PACKAGE_VERSION_PATCH "0")
+## set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Zsolt Alfoldi")
+##
+## set(CPACK_DEBIAN_PACKAGE_DEBUG ON)
+## set(CPACK_DEB_COMPONENT_INSTALL ON)
+## set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+## set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
+##
+## include(CPack)
 
 message(STATUS "\n"
     "Configure settings\n"

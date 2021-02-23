@@ -40,6 +40,7 @@ RUN   DEBIAN_FRONTEND="noninteractive" apt-get install -y \
   python3-pip  \
   python3-setuptools
 
-RUN   DEBIAN_FRONTEND="noninteractive" apt-get install -y gettext git
-
-# libwxgtk3.0-dev
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+  gettext git freeglut3 freeglut3-dev libegl1-mesa-dev \
+  libgl1-mesa-dev libgl1-mesa-glx libgles2-mesa-dev libglew1.5-dev \
+  libglu1-mesa libglu1-mesa-dev mesa-common-dev

@@ -92,5 +92,8 @@ vendor/luajit/src/luajit
 .vs
 
 # alfonzso ignore list
-build-dir
-build_args
+*build-dir*
+*build_dir*
+*build_args*
+.tmp
+.vscode
